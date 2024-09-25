@@ -94,40 +94,29 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  int swap_flag = 0;
   setTimer(0, 500);
+  int status = 0;
   while (1)
   {
-	  if (timer_flag[0] == 1)
-	    {
-	      timer_flag[0] = 0;      // Reset the timer flag
-	      setTimer(0, 500);       // Reset the 500 ms timer
-
-	      // Swap the numbers displayed
-	      swap_flag = !swap_flag;  // Đảo cờ swap_flag
-
-	      if (swap_flag == 0)
-	      	  {
-	            // Hiển thị số 1 trên LED đầu tiên và số 2 trên LED thứ hai
-	            HAL_GPIO_WritePin(EN0_GPIO_Port, EN0_Pin, GPIO_PIN_RESET); // Bật LED 1
-	            display7SEG(1);  // Hiển thị số 1 trên LED 1
-
-	            HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_RESET); // Bật LED 2
-	            display7SEG(2);  // Hiển thị số 2 trên LED 2
-	          }
-	          else
-	          {
-	            // Hiển thị số 2 trên LED đầu tiên và số 1 trên LED thứ hai
-	            HAL_GPIO_WritePin(EN0_GPIO_Port, EN0_Pin, GPIO_PIN_RESET); // Bật LED 1
-	            display7SEG(2);  // Hiển thị số 2 trên LED 1
-
-	            HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_RESET); // Bật LED 2
-	            display7SEG(1);  // Hiển thị số 1 trên LED 2
-	          }
-	    }
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
+    if(timer_flag[0] == 1)
+    {
+    	timer_flag[0] = 0;
+    	setTimer(0, 500);
+    	switch(status) {
+    	case 0:
+    	    HAL_GPIO_WritePin(EN0_GPIO_Port, EN0_Pin, GPIO_PIN_RESET);
+    	    HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_SET);
+    	    display7SEG(1);
+    	    status = 1;
+    	    break;
+    	case 1:
+    	    HAL_GPIO_WritePin(EN0_GPIO_Port, EN0_Pin, GPIO_PIN_SET);
+    	    HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_RESET);
+    	    display7SEG(2);
+    	    status = 0;
+    	    break;
+    }
+   }
   }
   /* USER CODE END 3 */
 }
@@ -252,7 +241,7 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback ( TIM_HandleTypeDef * htim )
-	{
+{
 	timerRun();
 }
 
