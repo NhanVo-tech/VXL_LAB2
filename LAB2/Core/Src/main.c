@@ -1,4 +1,4 @@
-   /* USER CODE BEGIN Header */
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : main.c
@@ -54,6 +54,10 @@ static void MX_TIM2_Init(void);
 void display7SEG(int num);
 void update7SEG(int index);
 void updateClockBuffer();
+void updateLEDMatrix(int index);
+void disableAllColumns();
+void setRowData(uint8_t data);
+void enableColumn(int index);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -62,6 +66,21 @@ const int MAX_LED = 4;
 int index_led = 0;
 int led_buffer[4] = {1 , 2 , 3 , 4};
 int hour = 15 , minute = 8 , second = 50;
+//Ex9
+const int MAX_LED_MATRIX = 8;
+int index_led_matrix = 0;
+uint8_t matrix_buffer[10][8] = {
+    {0x3C, 0x66, 0xC3, 0xC3, 0xC3, 0xC3, 0x66, 0x3C}, // 0
+    {0x18, 0x38, 0x18, 0x18, 0x18, 0x18, 0x18, 0x7E}, // 1
+    {0x7E, 0xC3, 0x03, 0x0E, 0x38, 0x60, 0xC3, 0xFF}, // 2
+    {0x7E, 0xC3, 0x03, 0x1E, 0x03, 0xC3, 0xC3, 0x7E}, // 3
+    {0x0E, 0x1E, 0x36, 0x66, 0xC6, 0xFF, 0x06, 0x0F}, // 4
+    {0xFF, 0xC0, 0xFC, 0x06, 0x03, 0xC3, 0xC3, 0x7E}, // 5
+    {0x3C, 0x66, 0xC0, 0xFC, 0xC3, 0xC3, 0x66, 0x3C}, // 6
+    {0xFF, 0xC3, 0x06, 0x0C, 0x18, 0x30, 0x30, 0x30}, // 7
+    {0x7E, 0xC3, 0xC3, 0x7E, 0xC3, 0xC3, 0xC3, 0x7E}, // 8
+    {0x3C, 0x66, 0xC3, 0xC3, 0x7F, 0x03, 0x66, 0x3C}  // 9
+};
 /* USER CODE END 0 */
 
 /**
@@ -102,6 +121,7 @@ int main(void)
   setTimer(0, 2);
   setTimer(1, 3);
   setTimer(2, 7);
+  setTimer(3, 11);
   while (1)
   {
 	if(timer_flag[0] == 1) {
@@ -136,6 +156,15 @@ int main(void)
 			hour = 0;
 		}
 		updateClockBuffer();
+	}
+	if(timer_flag[3] == 1) {
+		timer_flag[3] = 0;
+		setTimer(3, 1000);
+
+		if (index_led_matrix >= MAX_LED_MATRIX) {
+		    	index_led_matrix = 0;
+		}
+		updateLEDMatrix(index_led_matrix++);
 	}
     /* USER CODE END WHILE */
 
@@ -238,26 +267,38 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, DOT_Pin|LED_RED_Pin|EN0_Pin|EN1_Pin
-                          |EN2_Pin|EN3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, ENM0_Pin|ENM1_Pin|DOT_Pin|LED_RED_Pin
+                          |EN0_Pin|EN1_Pin|EN2_Pin|EN3_Pin
+                          |ENM2_Pin|ENM3_Pin|ENM4_Pin|ENM5_Pin
+                          |ENM6_Pin|ENM7_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, SEG0_Pin|SEG1_Pin|SEG2_Pin|SEG3_Pin
-                          |SEG4_Pin|SEG5_Pin|SEG6_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, SEG0_Pin|SEG1_Pin|SEG2_Pin|ROW2_Pin
+                          |ROW3_Pin|ROW4_Pin|ROW5_Pin|ROW6_Pin
+                          |ROW7_Pin|SEG3_Pin|SEG4_Pin|SEG5_Pin
+                          |SEG6_Pin|ROW0_Pin|ROW1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : DOT_Pin LED_RED_Pin EN0_Pin EN1_Pin
-                           EN2_Pin EN3_Pin */
-  GPIO_InitStruct.Pin = DOT_Pin|LED_RED_Pin|EN0_Pin|EN1_Pin
-                          |EN2_Pin|EN3_Pin;
+  /*Configure GPIO pins : ENM0_Pin ENM1_Pin DOT_Pin LED_RED_Pin
+                           EN0_Pin EN1_Pin EN2_Pin EN3_Pin
+                           ENM2_Pin ENM3_Pin ENM4_Pin ENM5_Pin
+                           ENM6_Pin ENM7_Pin */
+  GPIO_InitStruct.Pin = ENM0_Pin|ENM1_Pin|DOT_Pin|LED_RED_Pin
+                          |EN0_Pin|EN1_Pin|EN2_Pin|EN3_Pin
+                          |ENM2_Pin|ENM3_Pin|ENM4_Pin|ENM5_Pin
+                          |ENM6_Pin|ENM7_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SEG0_Pin SEG1_Pin SEG2_Pin SEG3_Pin
-                           SEG4_Pin SEG5_Pin SEG6_Pin */
-  GPIO_InitStruct.Pin = SEG0_Pin|SEG1_Pin|SEG2_Pin|SEG3_Pin
-                          |SEG4_Pin|SEG5_Pin|SEG6_Pin;
+  /*Configure GPIO pins : SEG0_Pin SEG1_Pin SEG2_Pin ROW2_Pin
+                           ROW3_Pin ROW4_Pin ROW5_Pin ROW6_Pin
+                           ROW7_Pin SEG3_Pin SEG4_Pin SEG5_Pin
+                           SEG6_Pin ROW0_Pin ROW1_Pin */
+  GPIO_InitStruct.Pin = SEG0_Pin|SEG1_Pin|SEG2_Pin|ROW2_Pin
+                          |ROW3_Pin|ROW4_Pin|ROW5_Pin|ROW6_Pin
+                          |ROW7_Pin|SEG3_Pin|SEG4_Pin|SEG5_Pin
+                          |SEG6_Pin|ROW0_Pin|ROW1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -412,6 +453,111 @@ void updateClockBuffer() {
 	led_buffer[2] = minute / 10; // Tens place of the minute
 	led_buffer[3] = minute % 10; // Ones place of the minute
 }
+void updateLEDMatrix(int index) {
+    // Vô hiệu hóa tất cả các cột trước khi hiển thị
+    disableAllColumns();
+
+    // Hiển thị dữ liệu dựa trên giá trị index
+    switch (index) {
+        case 0:
+            setRowData(matrix_buffer[0][index_led_matrix]);
+            enableColumn(index_led_matrix);
+            break;
+        case 1:
+            setRowData(matrix_buffer[1][index_led_matrix]);
+            enableColumn(index_led_matrix);
+            break;
+        case 2:
+            setRowData(matrix_buffer[2][index_led_matrix]);
+            enableColumn(index_led_matrix);
+            break;
+        case 3:
+            setRowData(matrix_buffer[3][index_led_matrix]);
+            enableColumn(index_led_matrix);
+            break;
+        case 4:
+            setRowData(matrix_buffer[4][index_led_matrix]);
+            enableColumn(index_led_matrix);
+            break;
+        case 5:
+            setRowData(matrix_buffer[5][index_led_matrix]);
+            enableColumn(index_led_matrix);
+            break;
+        case 6:
+            setRowData(matrix_buffer[6][index_led_matrix]);
+            enableColumn(index_led_matrix);
+            break;
+        case 7:
+            setRowData(matrix_buffer[7][index_led_matrix]);
+            enableColumn(index_led_matrix);
+            break;
+        case 8:
+            setRowData(matrix_buffer[8][index_led_matrix]);
+            enableColumn(index_led_matrix);
+            break;
+        case 9:
+            setRowData(matrix_buffer[9][index_led_matrix]);
+            enableColumn(index_led_matrix);
+            break;
+        default:
+            break;
+    }
+}
+
+void disableAllColumns() {
+    // Vô hiệu hóa tất cả các cột bằng cách đặt ENM0 đến ENM7 là HIGH
+    HAL_GPIO_WritePin(ENM0_GPIO_Port, ENM0_Pin, SET);
+    HAL_GPIO_WritePin(ENM1_GPIO_Port, ENM1_Pin, SET);
+    HAL_GPIO_WritePin(ENM2_GPIO_Port, ENM2_Pin, SET);
+    HAL_GPIO_WritePin(ENM3_GPIO_Port, ENM3_Pin, SET);
+    HAL_GPIO_WritePin(ENM4_GPIO_Port, ENM4_Pin, SET);
+    HAL_GPIO_WritePin(ENM5_GPIO_Port, ENM5_Pin, SET);
+    HAL_GPIO_WritePin(ENM6_GPIO_Port, ENM6_Pin, SET);
+    HAL_GPIO_WritePin(ENM7_GPIO_Port, ENM7_Pin, SET);
+}
+
+void setRowData(uint8_t data) {
+    // Thiết lập dữ liệu cho các hàng (PB8 đến PB15)
+    HAL_GPIO_WritePin(ROW0_GPIO_Port, ROW0_Pin, (data & 0x01) ? SET : RESET);
+    HAL_GPIO_WritePin(ROW1_GPIO_Port, ROW1_Pin, (data & 0x02) ? SET : RESET);
+    HAL_GPIO_WritePin(ROW2_GPIO_Port, ROW2_Pin, (data & 0x04) ? SET : RESET);
+    HAL_GPIO_WritePin(ROW3_GPIO_Port, ROW3_Pin, (data & 0x08) ? SET : RESET);
+    HAL_GPIO_WritePin(ROW4_GPIO_Port, ROW4_Pin, (data & 0x10) ? SET : RESET);
+    HAL_GPIO_WritePin(ROW5_GPIO_Port, ROW5_Pin, (data & 0x20) ? SET : RESET);
+    HAL_GPIO_WritePin(ROW6_GPIO_Port, ROW6_Pin, (data & 0x40) ? SET : RESET);
+    HAL_GPIO_WritePin(ROW7_GPIO_Port, ROW7_Pin, (data & 0x80) ? SET : RESET);
+}
+
+void enableColumn(int index) {
+    // Kích hoạt cột tương ứng bằng cách đặt ENMx LOW
+    switch (index) {
+        case 0:
+            HAL_GPIO_WritePin(ENM0_GPIO_Port, ENM0_Pin, RESET);
+            break;
+        case 1:
+            HAL_GPIO_WritePin(ENM1_GPIO_Port, ENM1_Pin, RESET);
+            break;
+        case 2:
+            HAL_GPIO_WritePin(ENM2_GPIO_Port, ENM2_Pin, RESET);
+            break;
+        case 3:
+            HAL_GPIO_WritePin(ENM3_GPIO_Port, ENM3_Pin, RESET);
+            break;
+        case 4:
+            HAL_GPIO_WritePin(ENM4_GPIO_Port, ENM4_Pin, RESET);
+            break;
+        case 5:
+            HAL_GPIO_WritePin(ENM5_GPIO_Port, ENM5_Pin, RESET);
+            break;
+        case 6:
+            HAL_GPIO_WritePin(ENM6_GPIO_Port, ENM6_Pin, RESET);
+            break;
+        case 7:
+            HAL_GPIO_WritePin(ENM7_GPIO_Port, ENM7_Pin, RESET);
+            break;
+    }
+}
+
 /* USER CODE END 4 */
 
 /**
