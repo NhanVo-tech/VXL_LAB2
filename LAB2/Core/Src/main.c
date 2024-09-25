@@ -53,6 +53,7 @@ static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 void display7SEG(int num);
 void update7SEG(int index);
+void updateClockBuffer();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -60,6 +61,7 @@ void update7SEG(int index);
 const int MAX_LED = 4;
 int index_led = 0;
 int led_buffer[4] = {1 , 2 , 3 , 4};
+int hour = 15 , minute = 8 , second = 50;
 /* USER CODE END 0 */
 
 /**
@@ -99,6 +101,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   setTimer(0, 2);
   setTimer(1, 3);
+  setTimer(2, 7);
   while (1)
   {
 	if(timer_flag[0] == 1) {
@@ -109,13 +112,30 @@ int main(void)
 	}
 	if(timer_flag[1] == 1) {
 		timer_flag[1] = 0;
-		setTimer(1, 200);
+		setTimer(1, 500);
 
 		if(index_led >= 4) {
 			index_led = 0;
 		}
 		update7SEG(index_led++);
+	}
+	if(timer_flag[2] == 1) {
+		timer_flag[2] = 0;
+		setTimer(2, 1000);
 
+		second ++;
+		if(second >= 60) {
+			second = 0;
+			minute++;
+		}
+		if( minute >= 60) {
+			minute = 0;
+			hour ++;
+		}
+		if( hour >=24) {
+			hour = 0;
+		}
+		updateClockBuffer();
 	}
     /* USER CODE END WHILE */
 
@@ -384,6 +404,13 @@ void update7SEG(int index) {
  	 default :
  		 break ;
  }
+}
+void updateClockBuffer() {
+	led_buffer[0] = hour / 10; // Tens place of the hour
+	led_buffer[1] = hour % 10; // Ones place of the hour
+
+	led_buffer[2] = minute / 10; // Tens place of the minute
+	led_buffer[3] = minute % 10; // Ones place of the minute
 }
 /* USER CODE END 4 */
 
