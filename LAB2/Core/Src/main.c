@@ -112,7 +112,7 @@ int main(void)
 	}
 	if(timer_flag[1] == 1) {
 		timer_flag[1] = 0;
-		setTimer(1, 500);
+		setTimer(1, 250);
 
 		if(index_led >= 4) {
 			index_led = 0;
